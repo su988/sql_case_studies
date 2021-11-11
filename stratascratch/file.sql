@@ -92,3 +92,44 @@ select
     AVG(bedrooms) as n_bedrooms_avg
 from airbnb_search_details
 GROUP BY city, property_type
+
+--9. Produce a list of the top three revenue generating facilities (including ties). Output facility name and rank
+with total_revenue as (
+	SELECT
+	name,
+	SUM(
+		CASE 
+	  		WHEN b.memid = 0 then slots*guestcost
+		  	ELSE slots*membercost
+	  	END
+	) as revenue 
+FROM cd.facilities f
+JOIN cd.bookings b
+ON f.facid = b.facid
+GROUP BY 1
+ORDER BY revenue desc LIMIT 3  
+)
+
+SELECT 
+	name,
+	rank() over (order by revenue desc) as rank
+FROM total_revenue
+
+
+-- 10. For each date, find the difference between the distance per dollar for that date and the average distance per dollar for that year/month. distance_per_dollar = distance travelled / cost of ride
+SELECT 
+    request_date,
+    ROUND(ABS(CAST(distance_to_travel / monetary_cost - AVG(distance_to_travel / monetory_cost)  OVER (PARTITION BY date_trunc("month", request_date)) as decimal)), 2) AS difference
+FROM interviews.uber_rides
+ORDER BY request_date
+
+
+
+
+
+
+
+
+
+
+
